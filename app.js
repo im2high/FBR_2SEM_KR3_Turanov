@@ -41,36 +41,68 @@ loadContent('home');
 function initNotes() {
     const form = document.getElementById('note-form');
     const input = document.getElementById('note-input');
+    const reminderForm = document.getElementById('reminder-form');
+    const reminderText = document.getElementById('reminder-text');
+    const reminderTime = document.getElementById('reminder-time');
     const list = document.getElementById('notes-list');
 
     function loadNotes() {
         const notes = JSON.parse(localStorage.getItem('notes') || '[]');
-        // ✅ ИСПРАВЛЕНИЕ 1: note.text вместо note, и margin-bottom вместо marginbottom
-        list.innerHTML = notes.map(note =>
-            `<li class="card" style="margin-bottom: 0.5rem; padding: 0.5rem;">
-                <strong>${note.text}</strong>
-                ${note.datetime ? `<small style="margin-left: 0.5rem; color: #888;">${note.datetime}</small>` : ''}
-            </li>`
-        ).join('');
+        list.innerHTML = notes.map(note => {
+            let reminderInfo = '';
+            if (note.reminder) {
+                const date = new Date(note.reminder);
+                reminderInfo = `<br><small>!!! Напоминание: ${date.toLocaleString()}</small>`;
+            }
+            return `<li class="card" style="margin-bottom: 0.5rem; padding: 0.5rem;">
+            ${note.text}${reminderInfo}
+            </li>`;
+        }).join(' ');
     }
 
-    function addNote(text, datetime) {
+    function addNote(text, reminderTimestamp = null) {
         const notes = JSON.parse(localStorage.getItem('notes') || '[]');
-        const newNote = { id: Date.now(), text, datetime: datetime || '' };
+        const newNote = {
+            id: Date.now(), text, reminder: reminderTimestamp
+        };
         notes.push(newNote);
         localStorage.setItem('notes', JSON.stringify(notes));
         loadNotes();
-
-        // Отправляем событие на сервер через WebSocket
-        socket.emit('newTask', { text, timestamp: Date.now() });
+        // Отправляем событие на сервер (только если есть напоминание)
+        if (reminderTimestamp) {
+            socket.emit('newReminder', {
+                id: newNote.id,
+                text: text,
+                reminderTime: reminderTimestamp
+            });
+        } else {
+            // Можно оставить старый эмит для уведомлений о новых заметках
+            socket.emit('newTask', { text, timestamp: Date.now() });
+        }
     }
-
+    // Обработка обычной заметки
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         const text = input.value.trim();
         if (text) {
             addNote(text);
             input.value = '';
+        }
+    });
+    // Обработка заметки с напоминанием
+    reminderForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = reminderText.value.trim();
+        const datetime = reminderTime.value;
+        if (text && datetime) {
+            const timestamp = new Date(datetime).getTime();
+            if (timestamp > Date.now()) {
+                addNote(text, timestamp);
+                reminderText.value = '';
+                reminderTime.value = '';
+            } else {
+                alert('Дата напоминания должна быть в будущем');
+            }
         }
     });
 
