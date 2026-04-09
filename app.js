@@ -3,7 +3,7 @@ const homeBtn = document.getElementById('home-btn');
 const aboutBtn = document.getElementById('about-btn');
 
 // Подключение к серверу через Socket.IO
-const socket = io('http://localhost:3001');
+const socket = io('http://localhost:3000');
 
 function setActiveButton(activeId) {
     [homeBtn, aboutBtn].forEach(btn => btn.classList.remove('active'));
@@ -130,7 +130,7 @@ async function subscribeToPush() {
             applicationServerKey:
                 urlBase64ToUint8Array('BMJS6PIH33ZMeXwuF_pHGKEVs-qFZl0g4nMHZ_cvdK0Oifjpobc4OxYhBSh874PepmnKQtq6ZtsfUAR765XtH1Y')
         });
-        await fetch('http://localhost:3001/subscribe', {
+        await fetch('http://localhost:3000/subscribe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(subscription)
@@ -146,7 +146,7 @@ async function unsubscribeFromPush() {
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
     if (subscription) {
-        await fetch('http://localhost:3001/unsubscribe', {
+        await fetch('http://localhost:3000/unsubscribe', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ endpoint: subscription.endpoint })

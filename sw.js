@@ -91,7 +91,7 @@ self.addEventListener('push', (event) => {
     // Добавляем кнопку только если это напоминание
     if (data.reminderId) {
         options.actions = [
-            { action: 'snooze', title: 'Отложить на 5 минут' }
+            { action: 'snooze', title: 'Отложить на 1 минуту' }
         ];
     }
     event.waitUntil(
